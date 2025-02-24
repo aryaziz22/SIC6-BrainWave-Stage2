@@ -10,8 +10,13 @@ from machine import Pin, time_pulse_us
 WIFI_SSID = "Mas Reza"
 WIFI_PASSWORD = "aaaaaaaa"
 
-# API Server
-SERVER_URL = "http://192.168.0.102:5000/data"  # Ganti dengan IP PC yang menjalankan Flask
+# API Server untuk Flask
+SERVER_URL = "http://192.168.0.104:5000/data"
+
+# Ubidots Credentials
+UBIDOTS_TOKEN = "BBUS-cbZ9wLHQ250ReX1grTS26L5PzhopU9" 
+UBIDOTS_DEVICE_LABEL = "esp32-sic6" 
+UBIDOTS_URL = f"http://industrial.api.ubidots.com/api/v1.6/devices/{UBIDOTS_DEVICE_LABEL}/"
 
 # Sensor setup
 DHT_PIN = Pin(15)
@@ -80,34 +85,71 @@ def send_http_data(temp, hum, dist):
 
     # Buat JSON dengan key yang benar
     payload = {
-        "temp": round(temp, 2),  # Menggunakan kunci yang sesuai dengan yang diharapkan server
         "hum": round(hum, 2),
         "dist": round(dist, 2)
     }
 
     # Konversi JSON ke format string
     try:
-        json_payload = ujson.dumps(payload)  # FIX encoding
+        json_payload = ujson.dumps(payload)
     except Exception as e:
         print("❌ Error encoding JSON:", e)
         return
 
     headers = {"Content-Type": "application/json"}
 
-    print(f"📤 Sending JSON: {json_payload}")
+    print(f"📤 Sending JSON to Flask: {json_payload}")
 
     for attempt in range(3):  # Retry jika gagal
         try:
             response = urequests.post(SERVER_URL, data=json_payload, headers=headers)
-            response_text = response.text.strip()  # Bersihkan karakter aneh
+            response_text = response.text.strip()
             print(f"✅ Response: {response_text}")
             response.close()
             return
         except Exception as e:
-            print(f"❌ Error sending data (Attempt {attempt + 1}/3):", e)
+            print(f"❌ Error sending data to Flask (Attempt {attempt + 1}/3):", e)
             time.sleep(2)
 
-    print("❌ Failed to send data after 3 attempts.")
+    print("❌ Failed to send data to Flask after 3 attempts.")
+
+def send_ubidots_data(temp, hum, dist):
+    """Send sensor data to Ubidots via HTTP"""
+    if temp is None or hum is None or dist is None:
+        print("⚠️ Invalid sensor data, skipping Ubidots request...")
+        return
+
+    payload = {
+        "temperature": round(temp, 2),
+        "humidity": round(hum, 2),
+        "distance": round(dist, 2)
+    }
+
+    try:
+        json_payload = ujson.dumps(payload)
+    except Exception as e:
+        print("❌ Error encoding JSON:", e)
+        return
+
+    headers = {
+        "Content-Type": "application/json",
+        "X-Auth-Token": UBIDOTS_TOKEN
+    }
+
+    print(f"📤 Sending JSON to Ubidots: {json_payload}")
+
+    for attempt in range(3):  # Retry jika gagal
+        try:
+            response = urequests.post(UBIDOTS_URL, data=json_payload, headers=headers)
+            response_text = response.text.strip()
+            print(f"✅ Ubidots Response: {response_text}")
+            response.close()
+            return
+        except Exception as e:
+            print(f"❌ Error sending data to Ubidots (Attempt {attempt + 1}/3):", e)
+            time.sleep(2)
+
+    print("❌ Failed to send data to Ubidots after 3 attempts.")
 
 # Mulai eksekusi
 connect_wifi()
@@ -118,6 +160,10 @@ while True:
 
     print(f"🌡️ Temp: {temp}°C, 💧 Hum: {hum}%, 📏 Dist: {dist} cm")
 
+    # Kirim data ke Flask server
     send_http_data(temp, hum, dist)
+
+    # Kirim data ke Ubidots
+    send_ubidots_data(temp, hum, dist)
 
     time.sleep(10)
