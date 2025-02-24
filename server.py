@@ -3,7 +3,7 @@ from pymongo import MongoClient
 from datetime import datetime
 import traceback  # Untuk menangkap error lebih rinci
 
-app = Flask(_name_)
+app = Flask(__name__)
 
 # MongoDB Atlas Connection
 MONGO_URI = "mongodb+srv://dbRenaldiEndrawan:BrainWave123@cluster0.b6oba.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0"
@@ -53,5 +53,5 @@ def receive_data():
         print("❌ Error Occurred:\n", traceback_message)
         return jsonify({"status": "error", "message": error_message, "trace": traceback_message}), 500
 
-if _name_ == '_main_':
+if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)
