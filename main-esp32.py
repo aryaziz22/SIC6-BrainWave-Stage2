@@ -85,6 +85,7 @@ def send_http_data(temp, hum, dist):
 
     # Buat JSON dengan key yang benar
     payload = {
+        "temp": round(temp, 2),
         "hum": round(hum, 2),
         "dist": round(dist, 2)
     }

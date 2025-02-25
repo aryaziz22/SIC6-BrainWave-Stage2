@@ -6,7 +6,7 @@ import traceback  # Untuk menangkap error lebih rinci
 app = Flask(__name__)
 
 # MongoDB Atlas Connection
-MONGO_URI = "mongodb+srv://dbRenaldiEndrawan:BrainWave123@cluster0.b6oba.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0"
+MONGO_URI = "mongodb+srv://oktagendeveloper:oktagendeveloper@cluster0.b6oba.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0"
 
 try:
     client = MongoClient(MONGO_URI)
